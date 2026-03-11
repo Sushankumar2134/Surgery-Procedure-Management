@@ -1,32 +1,77 @@
-import React,{useEffect,useState} from 'react';
-import {TouchableOpacity} from 'react-native';
+import React,{useEffect,useState,useCallback} from 'react';
+import {TouchableOpacity,Alert} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
 import api from "../services/api";
 import {Block, Button, Text} from '../components';
 import {useTheme} from '../hooks';
+import { useFocusEffect } from '@react-navigation/native';
 
 const OperationTheatreManagement = ({navigation}: any) => {
   const {colors, sizes} = useTheme();
   const buttonBlue = '#3b82f6';
   const buttonGray = '#5a6b7d';
 
- const [otRecords, setOtRecords] = useState<any[]>([]);
- const fetchOT = async () => {
+ 
+  const [otRecords, setOtRecords] = useState<any[]>([]);
+
+
+const fetchOT = async () => {
   try {
 
     const response = await api.get("ot");
 
-    if(response.data.success){
+    if (response.data.success) {
       setOtRecords(response.data.data);
     }
 
-  } catch(error){
+  } catch (error) {
     console.log("OT fetch error:", error);
   }
 };
-useEffect(() => {
-  fetchOT();
-}, []);
+
+useFocusEffect(
+  useCallback(() => {
+    fetchOT();
+  }, [])
+);
+const deleteOT = (id: string) => {
+
+  Alert.alert(
+    "Delete OT Record",
+    "Are you sure you want to delete this OT record?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel"
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+
+          try {
+
+            const response = await api.delete(`ot/${id}`);
+
+            if (response.data.success) {
+
+              Alert.alert("Success", "OT record deleted");
+
+              fetchOT(); // refresh table
+
+            }
+
+          } catch (error) {
+            console.log("Delete OT error:", error);
+            Alert.alert("Error", "Failed to delete OT record");
+          }
+
+        }
+      }
+    ]
+  );
+
+};
 
   return (
     <Block>
@@ -130,12 +175,32 @@ useEffect(() => {
   {record.approval_status}
 </Text>
                       <Block row style={{width: 116}} align="center">
-                        <TouchableOpacity style={{marginRight: 12}}>
+                        <TouchableOpacity
+                          style={{marginRight: 12}}
+                          onPress={() => navigation.navigate('Screens', {screen: 'EditOT', params: {record}})}>
                           <MaterialIcons name="edit" size={18} color={buttonBlue} />
                         </TouchableOpacity>
-                        <TouchableOpacity>
-                          <MaterialIcons name="delete" size={18} color="#ea0606" />
-                        </TouchableOpacity>
+                        <TouchableOpacity
+  onPress={() => {
+    Alert.alert(
+      "Delete OT Record",
+      "Are you sure you want to delete this OT record?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteOT(record.id)
+        }
+      ]
+    );
+  }}
+>
+  <MaterialIcons name="delete" size={18} color="#ea0606" />
+</TouchableOpacity>
                       </Block>
                     </Block>
                   ))

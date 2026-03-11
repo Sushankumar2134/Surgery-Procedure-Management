@@ -1,7 +1,8 @@
-import React, {useState} from 'react';
-import {Modal as RNModal, Platform, TouchableOpacity} from 'react-native';
+import React, {useState,useEffect} from 'react';
+import {Modal as RNModal, Platform, TouchableOpacity,Alert} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import api from "../services/api";
 
 import {Block, Button, Input, Text} from '../components';
 import {useTheme} from '../hooks';
@@ -16,20 +17,40 @@ type PickerType =
   | 'fastingStatus'
   | null;
 
-const SurgeryScheduling = () => {
+const SurgeryScheduling = ({navigation}:any) => {
   const {colors, sizes} = useTheme();
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState('John D.');
-  const [selectedSurgeon, setSelectedSurgeon] = useState('Dr. Susan');
-  const [selectedAssistantDoctor, setSelectedAssistantDoctor] = useState('Dr. Kevin');
-  const [selectedAnesthetist, setSelectedAnesthetist] = useState('Dr. Meera');
+const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
+const [selectedPatient, setSelectedPatient] = useState('');
+const [selectedSurgeon, setSelectedSurgeon] = useState('');
+const [selectedAssistantDoctor, setSelectedAssistantDoctor] = useState('');
+const [selectedAnesthetist, setSelectedAnesthetist] = useState('');
+const [surgeryId, setSurgeryId] = useState<number | null>(null);
+
+const [selectedSurgeonId, setSelectedSurgeonId] = useState<string | null>(null);
+const [selectedAssistantDoctorId, setSelectedAssistantDoctorId] = useState<string | null>(null);
+const [selectedAnesthetistId, setSelectedAnesthetistId] = useState<string | null>(null);
+  
+const [patients, setPatients] = useState<any[]>([]);
+const [surgeons, setSurgeons] = useState<any[]>([]);
+const [assistantDoctors, setAssistantDoctors] = useState<any[]>([]);
+const [anesthetists, setAnesthetists] = useState<any[]>([]);
+
   const [selectedPriority, setSelectedPriority] = useState('Normal');
   const [selectedConsent, setSelectedConsent] = useState('Yes');
   const [selectedFastingStatus, setSelectedFastingStatus] = useState('Fasting');
   const [selectedDate, setSelectedDate] = useState('2026-03-10');
   const [selectedTime, setSelectedTime] = useState('09:00');
+  const [surgeryType,setSurgeryType] = useState("");
+  const [otRoom,setOtRoom] = useState("");
+  const [notes,setNotes] = useState("");
+  const [bp, setBp] = useState("");
+const [heartRate, setHeartRate] = useState("");
+const [allergies, setAllergies] = useState("");
+const [riskFactors, setRiskFactors] = useState("");
+const [instructions, setInstructions] = useState("");
   const buttonPink = '#fe00e0';
 
   const surgeries = [
@@ -68,12 +89,16 @@ const SurgeryScheduling = () => {
     },
   ];
 
-  const patientOptions = Array.from(
-    new Set([...surgeries.map((surgery) => surgery.patient), 'Aisha P.', 'Karan S.']),
-  );
-  const surgeonOptions = Array.from(new Set(surgeries.map((surgery) => surgery.surgeon)));
-  const assistantDoctorOptions = ['Dr. Kevin', 'Dr. Priya', 'Dr. Ahmed'];
-  const anesthetistOptions = ['Dr. Meera', 'Dr. Rahul', 'Dr. Shreya'];
+ const patientOptions = patients.map(
+  (p) => `${p.first_name} ${p.last_name}`
+);
+
+const surgeonOptions = surgeons.map((s) => s.name);
+
+const assistantDoctorOptions = assistantDoctors.map((a) => a.name);
+
+const anesthetistOptions = anesthetists.map((a) => a.name);
+
   const priorityOptions = ['Normal', 'Emergency'];
   const consentOptions = ['Yes', 'No'];
   const fastingStatusOptions = ['Fasting', 'Not Fasting', 'NPO After Midnight'];
@@ -131,16 +156,44 @@ const SurgeryScheduling = () => {
 
   const isCompactPicker = activePicker === 'patient' || activePicker === 'priority';
 
-  const handleSelectPickerValue = (value: string) => {
-    if (activePicker === 'patient') setSelectedPatient(value);
-    if (activePicker === 'surgeon') setSelectedSurgeon(value);
-    if (activePicker === 'assistantDoctor') setSelectedAssistantDoctor(value);
-    if (activePicker === 'anesthetist') setSelectedAnesthetist(value);
-    if (activePicker === 'priority') setSelectedPriority(value);
-    if (activePicker === 'consent') setSelectedConsent(value);
-    if (activePicker === 'fastingStatus') setSelectedFastingStatus(value);
-    setActivePicker(null);
-  };
+const handleSelectPickerValue = (value: string) => {
+
+  if (activePicker === 'patient') {
+    const patient = patients.find(
+      (p) => `${p.first_name} ${p.last_name}` === value
+    );
+
+    setSelectedPatient(value);
+    setSelectedPatientId(patient?.id ?? null);
+  }
+
+  if (activePicker === 'surgeon') {
+    const surgeon = surgeons.find((s) => s.name === value);
+
+    setSelectedSurgeon(value);
+    setSelectedSurgeonId(surgeon?.id ?? null);
+  }
+
+  if (activePicker === 'assistantDoctor') {
+    const doctor = assistantDoctors.find((a) => a.name === value);
+
+    setSelectedAssistantDoctor(value);
+    setSelectedAssistantDoctorId(doctor?.id ?? null);
+  }
+
+  if (activePicker === 'anesthetist') {
+    const anesthetist = anesthetists.find((a) => a.name === value);
+
+    setSelectedAnesthetist(value);
+    setSelectedAnesthetistId(anesthetist?.id ?? null);
+  }
+
+  if (activePicker === 'priority') setSelectedPriority(value);
+  if (activePicker === 'consent') setSelectedConsent(value);
+  if (activePicker === 'fastingStatus') setSelectedFastingStatus(value);
+
+  setActivePicker(null);
+};
 
   const dateValue = new Date(`${selectedDate}T08:00:00`);
   const [selectedHour, selectedMinute] = selectedTime.split(':');
@@ -210,6 +263,142 @@ const SurgeryScheduling = () => {
       </TouchableOpacity>
     </Block>
   );
+const fetchPatients = async () => {
+  
+  try {
+    const response = await api.get("patients");
+    if (response.data.success) {
+      setPatients(response.data.data);
+    }
+  } catch (error) {
+    console.log("Patient fetch error:", error);
+  }
+};
+
+const fetchSurgeons = async () => {
+  try {
+    const response = await api.get("hr/surgeons");
+
+    if (response.data.success) {
+      setSurgeons(response.data.data);
+    }
+
+  } catch (error) {
+    console.log("Surgeon fetch error:", error);
+  }
+};
+const fetchAssistantDoctors = async () => {
+  try {
+    const response = await api.get("hr/assistant-doctors");
+
+    if (response.data.success) {
+      setAssistantDoctors(response.data.data);
+    }
+
+  } catch (error) {
+    console.log("Assistant doctor fetch error:", error);
+  }
+};
+
+const fetchAnesthetists = async () => {
+  try {
+
+    const response = await api.get("hr/anesthetists");
+
+    if (response.data.success) {
+
+      const staff = response.data.data;
+
+      setAnesthetists(staff);
+
+    }
+
+  } catch (error) {
+    console.log("Anesthetist fetch error:", error);
+  }
+};
+
+useEffect(() => {
+  fetchPatients();
+  fetchSurgeons();
+  fetchAssistantDoctors();
+  fetchAnesthetists();
+}, []);
+
+const saveSurgery = async () => {
+  try {
+
+    const patient = patients.find(
+      (p) => `${p.first_name} ${p.last_name}` === selectedPatient
+    );
+
+    const surgeon = surgeons.find((s) => s.name === selectedSurgeon);
+    const assistantDoctor = assistantDoctors.find((a) => a.name === selectedAssistantDoctor);
+    const anesthetist = anesthetists.find((a) => a.name === selectedAnesthetist);
+
+    const response = await api.post("surgery", {
+      patient_id: patient?.id,
+      surgery_type: surgeryType,
+      surgery_date: selectedDate,
+      surgery_time: selectedTime,
+      ot_room: otRoom,
+ surgeon_id: selectedSurgeonId,
+assistant_doctor_id: selectedAssistantDoctorId,
+anesthetist_id: selectedAnesthetistId,
+      priority: selectedPriority,
+      notes: notes
+    });
+
+    if (response.data.success) {
+      const newSurgeryId=response.data.data.id;
+      setSurgeryId(newSurgeryId);
+      alert("Surgery Saved Successfully");
+    }
+
+  } catch (error:any) {
+  console.log("FULL ERROR:", error.response?.data);
+  Alert.alert("Error", JSON.stringify(error.response?.data));
+}
+};
+
+const savePreOpNotes = async () => {
+if (!surgeryId) {
+    Alert.alert("Error","Please save surgery first");
+    return;
+  }
+
+  try {
+
+    const response = await api.post("post-operative", {
+      surgery_id:surgeryId,
+      // bp: bp,
+      // heart_rate: heartRate,
+      // allergies: allergies,
+      // consent: selectedConsent,
+      // fasting_status: selectedFastingStatus,
+      // risk_factors: riskFactors,
+      // instructions: instructions
+      procedure_performed: surgeryType,
+  duration: heartRate,
+  blood_loss: bp,
+  patient_condition: allergies,
+  recovery_instructions: instructions,
+  complication_type: riskFactors,
+  complication_description: ""
+    });
+
+    if (response.data.success) {
+      setSurgeryId(response.data.data.surgery_id);
+      Alert.alert("Success", "Pre-Operative Notes Saved");
+      navigation.navigate("Screens", {
+      screen: "PostOperativeComplications"
+});
+    }
+
+  } catch (error:any) {
+    console.log("PreOp error:", error.response?.data);
+  }
+};
 
   return (
     <Block>
@@ -232,7 +421,12 @@ const SurgeryScheduling = () => {
               iconName: 'arrow-drop-down',
             })}
 
-            <Input placeholder="Surgery Type" marginBottom={sizes.sm} />
+            <Input
+  placeholder="Surgery Type"
+  value={surgeryType}
+  onChangeText={setSurgeryType}
+  marginBottom={sizes.sm}
+/>
 
             {renderPickerField({
               label: 'Surgery Date',
@@ -270,7 +464,12 @@ const SurgeryScheduling = () => {
               </Block>
             )}
 
-            <Input placeholder="OT Room" marginBottom={sizes.sm} />
+            <Input
+  placeholder="OT Room"
+  value={otRoom}
+  onChangeText={setOtRoom}
+  marginBottom={sizes.sm}
+/>
 
             {renderPickerField({
               label: 'Surgeon',
@@ -300,21 +499,24 @@ const SurgeryScheduling = () => {
               iconName: 'arrow-drop-down',
             })}
               <Input
-                    placeholder="Notes"
-                    marginBottom={sizes.sm}
-                    multiline
-                    numberOfLines={3}
-                />
+  placeholder="Notes"
+  value={notes}
+  onChangeText={setNotes}
+  marginBottom={sizes.sm}
+  multiline
+  numberOfLines={3}
+/>
             <Block row justify="flex-end" marginTop={sizes.xs}>
-              <Button
-                color={buttonPink}
-                style={{backgroundColor: buttonPink}}
-                marginRight={sizes.s}
-                paddingHorizontal={sizes.m}>
+             <Button
+                 onPress={saveSurgery}
+                 color={buttonPink}
+                 style={{backgroundColor: buttonPink}}
+                 marginRight={sizes.s}
+                 paddingHorizontal={sizes.m}>
                 <Text white semibold>
-                  Save Surgery
+                Save Surgery
                 </Text>
-              </Button>
+            </Button>
 
               <Button
                 color={buttonPink}
@@ -331,11 +533,25 @@ const SurgeryScheduling = () => {
           <Block card marginTop={sizes.sm} padding={sizes.sm}>
             <Text p semibold marginBottom={sizes.sm}>
               Pre-Operative Notes
-            </Text>
-                <Input placeholder="BP" marginBottom={sizes.sm} />
+            </Text><Input
+  placeholder="BP"
+  value={bp}
+  onChangeText={setBp}
+  marginBottom={sizes.sm}
+/>
 
-                <Input placeholder="Heart Rate" marginBottom={sizes.sm} />
-            <Input placeholder="Allergies" marginBottom={sizes.sm} />
+               <Input
+  placeholder="Heart Rate"
+  value={heartRate}
+  onChangeText={setHeartRate}
+  marginBottom={sizes.sm}
+/>
+            <Input
+  placeholder="Allergies"
+  value={allergies}
+  onChangeText={setAllergies}
+  marginBottom={sizes.sm}
+/>
 
             {renderPickerField({
               label: 'Consent Obtained',
@@ -351,18 +567,30 @@ const SurgeryScheduling = () => {
               iconName: 'arrow-drop-down',
             })}
 
-            <Input placeholder="Risk Factors" marginBottom={sizes.sm} />
-            <Input placeholder="Pre-Operative Instructions" marginBottom={sizes.sm} />
+            <Input
+  placeholder="Risk Factors"
+  value={riskFactors}
+  onChangeText={setRiskFactors}
+  marginBottom={sizes.sm}
+/>
+          <Input
+  placeholder="Pre-Operative Instructions"
+  value={instructions}
+  onChangeText={setInstructions}
+  marginBottom={sizes.sm}
+/>
 
             <Block row justify="flex-end" marginTop={sizes.xs}>
-              <Button
-                color={buttonPink}
-                style={{backgroundColor: buttonPink}}
-                paddingHorizontal={sizes.m}>
-                <Text white semibold>
-                  Save Pre-Op Notes
-                </Text>
-              </Button>
+             <Button
+  color={buttonPink}
+  style={{backgroundColor: buttonPink}}
+  paddingHorizontal={sizes.m}
+  onPress={savePreOpNotes}
+>
+  <Text white semibold>
+    Save Pre-Op Notes
+  </Text>
+</Button>
             </Block>
           </Block>
 
@@ -399,9 +627,9 @@ const SurgeryScheduling = () => {
               {pickerTitle}
             </Text>
             <Block scroll showsVerticalScrollIndicator={false}>
-              {pickerOptions.map((option) => (
+              {pickerOptions.map((option,index) => (
                 <TouchableOpacity
-                  key={option}
+                  key={option+index}
                   onPress={() => handleSelectPickerValue(option)}
                   activeOpacity={0.8}>
                   <Block

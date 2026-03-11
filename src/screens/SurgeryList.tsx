@@ -1,7 +1,8 @@
 
-import React, {useEffect,useState} from 'react';
+import React, {useEffect,useState,useCallback} from 'react';
 import {TouchableOpacity,Alert} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 import {Block, Button, Text} from '../components';
 import {useTheme} from '../hooks';
@@ -17,18 +18,7 @@ const [surgeries, setSurgeries] = useState<any[]>([]);
 const [loading, setLoading] = useState(true);
 const [postOperativeIds, setPostOperativeIds] = useState<number[]>([]);
 
-//   const surgeries = [
-//     {
-//       id: 'SUR-1001',
-//       patient: 'John D.',
-//       type: 'Appendectomy',
-//       date: '2026-03-09',
-//       time: '09:00',
-//       room: 'OT-2',
-//       surgeon: 'Dr. Susan',
-//       priority: 'Normal',
-//       status: 'Scheduled',
-//     },
+
 //     {
 //       id: 'SUR-1002',
 //       patient: 'Mary K.',
@@ -85,10 +75,11 @@ const fetchPostOperative = async () => {
   }
 };
 
-useEffect(() => {
-  fetchSurgeries();
-    fetchPostOperative();
-}, []);
+useFocusEffect(
+  useCallback(() => {
+    fetchSurgeries();
+  }, [])
+);
 
 if (loading) {
   return (

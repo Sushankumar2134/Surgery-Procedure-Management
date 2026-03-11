@@ -23,5 +23,6 @@ export {default as Editsurgery} from './Editsurgery';
 export {default as Editoperativenotes} from './Editoperativenotes';
 export {default as OperationTheatreManagement} from './OperationTheatreManagement';
 export {default as OTUsageForm} from './OTUsageForm';
+export {default as EditOT} from './EditOT';
 export {default as PostOperativeComplications} from './PostOperativeComplications';
 export {default as Postopedit} from './postopedit';

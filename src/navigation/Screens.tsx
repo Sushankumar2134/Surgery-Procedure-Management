@@ -14,6 +14,7 @@ import {
   Editoperativenotes,
   OperationTheatreManagement,
   OTUsageForm,
+  EditOT,
   PostOperativeComplications,
   Postopedit,
 } from '../screens';
@@ -81,6 +82,12 @@ export default () => {
         name="OTUsageForm"
         component={OTUsageForm}
         options={{title: 'OT Usage Form'}}
+      />
+
+      <Stack.Screen
+        name="EditOT"
+        component={EditOT}
+        options={{title: 'Edit OT Management'}}
       />
 
       <Stack.Screen

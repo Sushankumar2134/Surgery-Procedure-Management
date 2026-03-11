@@ -12,21 +12,37 @@ const Editsurgery = ({navigation, route}: any) => {
   const surgery = route?.params?.surgery;
 
   const [patientValue] = useState(surgery?.patientId || 'P001 - John');
-  const [surgeryType] = useState(surgery?.type || 'Appendectomy');
+ const [surgeryType, setSurgeryType] = useState(
+  surgery?.surgery_type || ''
+);
 
 const [patients, setPatients] = useState<any[]>([]);
 
-const [selectedPatient, setSelectedPatient] = useState(surgery?.patientId || "");
-const [selectedPatientId, setSelectedPatientId] = useState(surgery?.patient_id || null);
+const [selectedPatient, setSelectedPatient] = useState(
+  surgery?.patient
+    ? `${surgery.patient.first_name} ${surgery.patient.last_name}`
+    : ""
+);
+
+const [selectedPatientId, setSelectedPatientId] = useState(
+  surgery?.patient_id || surgery?.patient?.id || null
+);
 
 const [showPatientDropdown, setShowPatientDropdown] = useState(false);
 
-  const [surgeryDate, setSurgeryDate] = useState(surgery?.date || '03/11/2026');
+ const [surgeryDate, setSurgeryDate] = useState(
+  surgery?.surgery_date
+    ? new Date(surgery.surgery_date).toLocaleDateString('en-US')
+    : '03/11/2026'
+);
   const [surgeryTime, setSurgeryTime] = useState(surgery?.time || '09:00 AM');
-  const [otRoom] = useState(surgery?.room || 'OT-1');
-  const [bp, setBp] = useState('');
-  const [heartRate, setHeartRate] = useState('');
-  const [fastingStatus, setFastingStatus] = useState('');
+ const [otRoom, setOtRoom] = useState(
+  surgery?.ot_room || ''
+);
+ const [bp, setBp] = useState(surgery?.preoperative?.bp || '');
+ const [heartRate, setHeartRate] = useState(surgery?.preoperative?.heart_rate || '');
+ const [fastingStatus, setFastingStatus] = useState(surgery?.preoperative?.fasting_status || '');
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -86,16 +102,10 @@ const [showPatientDropdown, setShowPatientDropdown] = useState(false);
   };
 const fetchPatients = async () => {
   try {
-    const response = await api.get("hr/employee");
+    const response = await api.get("patients");
 
-    // handle both formats
-    if (Array.isArray(response.data)) {
-      setPatients(response.data);
-    } else if (response.data.data) {
+    if (response.data.success) {
       setPatients(response.data.data);
-    }else if(response.data?.employees){
-        setPatients(response.data.employees);
-
     }
 
   } catch (error) {
@@ -205,6 +215,7 @@ useEffect(() => {
               label="Surgery Type"
               value={surgeryType}
               editable={false}
+              onChangeText={setSurgeryType}
               marginBottom={sizes.sm}
             />
 
@@ -241,8 +252,12 @@ useEffect(() => {
                 />
               </Block>
             )}
-
-            <Input label="OT Room" value={otRoom} editable={false} marginBottom={sizes.sm} />
+<Input
+  label="OT Room"
+  value={otRoom}
+  onChangeText={setOtRoom}
+  marginBottom={sizes.sm}
+/>
 
             <Block marginTop={sizes.sm} style={{borderTopWidth: 1, borderTopColor: colors.light}} />
 
@@ -273,31 +288,47 @@ useEffect(() => {
   style={{backgroundColor: '#22c55e', marginRight: sizes.sm}}
   paddingHorizontal={sizes.m}
   onPress={async () => {
-    try {
+  try {
 
-      // Convert MM/DD/YYYY → YYYY-MM-DD
-      const [month, day, year] = surgeryDate.split('/');
-      const formattedDate = `${year}-${month}-${day}`;
-
-        const[timePart]=surgeryTime.split(" ");
-     await api.put(`surgery/${surgery.id}`, {
-  patient_id: selectedPatientId,
-  surgery_date: formattedDate,
-  surgery_time: surgeryTime,
-  bp: bp,
-  heart_rate: heartRate,
-  fasting_status: fastingStatus,
-});
-
-      Alert.alert("Success", "Surgery updated successfully");
-
-      navigation.goBack();
-
-    } catch (error) {
-      console.log("Update error:", error);
-      Alert.alert("Error", "Failed to update surgery");
+    if (!selectedPatientId) {
+      Alert.alert("Error", "Please select a patient");
+      return;
     }
-  }}
+
+    // Convert MM/DD/YYYY → YYYY-MM-DD
+    const [month, day, year] = surgeryDate.split('/');
+    const formattedDate = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+
+    console.log("Updating surgery:", {
+      patient_id: selectedPatientId,
+      surgery_date: formattedDate,
+      surgery_time: surgeryTime.split(" ")[0],
+      bp,
+      heart_rate: heartRate,
+      fasting_status: fastingStatus
+    });
+
+    await api.put(`surgery/${surgery.id}`, {
+      patient_id: selectedPatientId,
+      surgery_type:surgeryType,
+      ot_room:otRoom,
+      surgery_date: formattedDate,
+      surgery_time: surgeryTime.split(" ")[0],
+      bp: bp,
+      heart_rate: heartRate,
+      fasting_status: fastingStatus,
+    });
+
+    Alert.alert("Success", "Surgery updated successfully");
+
+    navigation.goBack();
+
+  } catch (error) {
+  const err = error as any;
+  console.log("Update error:", err?.response?.data);
+  Alert.alert("Error", "Failed to update surgery");
+  }
+}}
 >
   <Text white semibold size={12}>
     UPDATE SURGERY
