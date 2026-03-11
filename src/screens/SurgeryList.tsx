@@ -204,6 +204,7 @@ if (loading) {
                                  surgery: {
                                  id: surgery.id,
                                  patientId: `${surgery.patient?.first_name} ${surgery.patient?.last_name}`,
+                                 patient_id: surgery.patient?.id,
                                  type: surgery.surgery_type,
                                  date: surgery.surgery_date,
                                  time: surgery.surgery_time,

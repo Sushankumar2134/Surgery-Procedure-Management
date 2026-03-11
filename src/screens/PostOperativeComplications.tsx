@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity,Alert} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
 
 import {Block, Button, Text} from '../components';
@@ -37,6 +37,35 @@ useEffect(() => {
 
 }, [navigation]);
 
+const deletePostOperative = async (id:number) => {
+  Alert.alert(
+    "Delete Post Operative",
+    "Are you sure you want to delete this record?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+
+            await api.delete(`post-operative/${id}`);
+
+            Alert.alert("Deleted", "Post Operative Record Deleted");
+
+            fetchPostOperative(); // refresh table
+
+          } catch (error) {
+            console.log("Delete error:", error);
+          }
+        },
+      },
+    ]
+  );
+};
 
   return (
     <Block>
@@ -122,17 +151,17 @@ useEffect(() => {
 </Text>
 
 <Block row style={{width:116}} align="center">
-  <TouchableOpacity style={{marginRight:12}}>
+  <TouchableOpacity 
+    style={{marginRight:12}}
+    onPress={() => navigation.navigate("Screens", {screen: "Postopedit", params: {record}})}>
     <MaterialIcons name="edit" size={18} color={buttonPink} />
   </TouchableOpacity>
 
-  <TouchableOpacity style={{marginRight:12}}>
-    <MaterialIcons name="visibility" size={18} color={buttonPink} />
-  </TouchableOpacity>
-
-  <TouchableOpacity>
-    <MaterialIcons name="delete" size={18} color="#ea0606" />
-  </TouchableOpacity>
+  <TouchableOpacity
+  onPress={() => deletePostOperative(record.id)}
+>
+  <MaterialIcons name="delete" size={18} color="#ea0606" />
+</TouchableOpacity>
 </Block>
                     </Block>
                   ))

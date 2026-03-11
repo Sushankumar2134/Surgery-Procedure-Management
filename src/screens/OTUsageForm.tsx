@@ -1,10 +1,12 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Modal as RNModal, Platform, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 
 import {Block, Button, Input, Text} from '../components';
 import {useTheme} from '../hooks';
+import api from "../services/api";
+import {Alert} from "react-native";
 
 type PickerType = 'surgery' | 'approvalStatus' | null;
 
@@ -17,6 +19,11 @@ const OTUsageForm = ({navigation}: any) => {
   const [showSurgeryTimePicker, setShowSurgeryTimePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [otRoomUsed, setOtRoomUsed] = useState("");
+const [equipmentUsed, setEquipmentUsed] = useState("");
+const [notes, setNotes] = useState("");
+const [selectedSurgeryId, setSelectedSurgeryId] = useState(null);
+
   const [selectedSurgery, setSelectedSurgery] = useState('John D. - Appendectomy');
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState('Approved');
   const [selectedSurgeryDate, setSelectedSurgeryDate] = useState('2026-03-10');
@@ -24,31 +31,29 @@ const OTUsageForm = ({navigation}: any) => {
   const [selectedStartTime, setSelectedStartTime] = useState('10:30');
   const [selectedEndTime, setSelectedEndTime] = useState('12:05');
 
-  const surgeries = [
-    {
-      id: 'SUR-1001',
-      patient: 'John D.',
-      type: 'Appendectomy',
-      date: '2026-03-09',
-      time: '09:00',
-    },
-    {
-      id: 'SUR-1002',
-      patient: 'Mary K.',
-      type: 'C-Section',
-      date: '2026-03-09',
-      time: '10:30',
-    },
-    {
-      id: 'SUR-1003',
-      patient: 'Ravi M.',
-      type: 'Hernia Repair',
-      date: '2026-03-09',
-      time: '12:00',
-    },
-  ];
 
-  const surgeryOptions = surgeries.map((s) => `${s.patient} - ${s.type}`);
+ 
+const [surgeries, setSurgeries] = useState<any[]>([]);
+const fetchSurgeries = async () => {
+  try {
+
+    const response = await api.get("surgery");
+
+    if (response.data.success) {
+      setSurgeries(response.data.data);
+    }
+
+  } catch (error) {
+    console.log("Surgery API error:", error);
+  }
+};
+useEffect(() => {
+  fetchSurgeries();
+}, []);
+const surgeryOptions = surgeries.map((s) => ({
+  label: `${s.patient?.first_name} ${s.patient?.last_name} - ${s.surgery_type}`,
+  id: s.id
+}));
   const approvalStatusOptions = ['Approved', 'Not Approved'];
 
   const pickerOptions =
@@ -72,12 +77,19 @@ const OTUsageForm = ({navigation}: any) => {
       ? 'Select Approval Status'
       : '';
 
-  const handleSelectPickerValue = (value: string) => {
-    if (activePicker === 'surgery') setSelectedSurgery(value);
-    if (activePicker === 'approvalStatus') setSelectedApprovalStatus(value);
-    setActivePicker(null);
-  };
+ const handleSelectPickerValue = (option: any) => {
 
+  if (activePicker === "surgery") {
+    setSelectedSurgery(option.label);
+    setSelectedSurgeryId(option.id);
+  }
+
+  if (activePicker === "approvalStatus") {
+    setSelectedApprovalStatus(option);
+  }
+
+  setActivePicker(null);
+};
   const surgeryDateValue = new Date(`${selectedSurgeryDate}T08:00:00`);
   const [surgeryHour, surgeryMinute] = selectedSurgeryTime.split(':');
   const surgeryTimeValue = new Date();
@@ -227,11 +239,28 @@ const OTUsageForm = ({navigation}: any) => {
               </Block>
             )}
 
-            <Input placeholder="OT Room" marginBottom={sizes.sm} />
+            <Input
+  placeholder="OT Room Used"
+  value={otRoomUsed}
+  onChangeText={setOtRoomUsed}
+  marginBottom={sizes.sm}
+/>
 
-            <Input placeholder="OT Room Used" marginBottom={sizes.sm} />
+            <Input
+  placeholder="Notes"
+  value={notes}
+  onChangeText={setNotes}
+  marginBottom={sizes.sm}
+  multiline
+  numberOfLines={3}
+/>
 
-            <Input placeholder="Equipment Used" marginBottom={sizes.sm} />
+            <Input
+  placeholder="Equipment Used"
+  value={equipmentUsed}
+  onChangeText={setEquipmentUsed}
+  marginBottom={sizes.sm}
+/>
 
             {renderPickerField({
               label: 'Start Time',
@@ -276,15 +305,50 @@ const OTUsageForm = ({navigation}: any) => {
               iconName: 'arrow-drop-down',
             })}
 
-            <Input placeholder="Notes" marginBottom={sizes.sm} multiline numberOfLines={3} />
 
-            <Block row justify="flex-end">
-              <Button color={buttonPink} paddingHorizontal={sizes.m}>
-                <Text white semibold>
-                  Update OT Details
-                </Text>
-              </Button>
-            </Block>
+           <Block row justify="flex-end">
+<Button
+  color={buttonPink}
+  paddingHorizontal={sizes.m}
+  onPress={async () => {
+
+    try {
+
+      const response = await api.post("ot", {
+
+        // surgery_id: 1,   // temporary (since dropdown not used)
+        surgery_id: selectedSurgeryId,
+        ot_room_used: otRoomUsed,
+        start_time: selectedStartTime,
+        end_time: selectedEndTime,
+        equipment_used: equipmentUsed,
+        approval_status: selectedApprovalStatus,
+        notes: notes
+
+      });
+
+      if (response.data.success) {
+
+        Alert.alert("Success", "OT record saved");
+
+        navigation.navigate("Screens", {
+          screen: "OperationTheatreManagement"
+        });
+
+      }
+
+    } catch (error) {
+      console.log("OT save error:", error);
+      Alert.alert("Error", "Failed to save OT record");
+    }
+
+  }}
+>
+  <Text white semibold>
+    Update OT Details
+  </Text>
+</Button>
+</Block>
           </Block>
         </Block>
       </Block>
@@ -321,7 +385,7 @@ const OTUsageForm = ({navigation}: any) => {
             <Block scroll showsVerticalScrollIndicator={false}>
               {pickerOptions.map((option) => (
                 <TouchableOpacity
-                  key={option}
+                  key={option.id || option}
                   onPress={() => handleSelectPickerValue(option)}
                   activeOpacity={0.8}>
                   <Block
@@ -333,7 +397,7 @@ const OTUsageForm = ({navigation}: any) => {
                       borderBottomWidth: 1,
                       borderBottomColor: colors.light,
                     }}>
-                    <Text>{option}</Text>
+                    <Text>{option.label || option}</Text>
                     {selectedPickerValue === option && (
                       <MaterialIcons name="check" size={18} color={buttonPink} />
                     )}

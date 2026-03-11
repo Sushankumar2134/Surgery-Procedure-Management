@@ -15,8 +15,10 @@ const Editsurgery = ({navigation, route}: any) => {
   const [surgeryType] = useState(surgery?.type || 'Appendectomy');
 
 const [patients, setPatients] = useState<any[]>([]);
-const [selectedPatient, setSelectedPatient] = useState(surgery?.patientId);
-const [selectedPatientId, setSelectedPatientId] = useState(surgery?.patient_id);
+
+const [selectedPatient, setSelectedPatient] = useState(surgery?.patientId || "");
+const [selectedPatientId, setSelectedPatientId] = useState(surgery?.patient_id || null);
+
 const [showPatientDropdown, setShowPatientDropdown] = useState(false);
 
   const [surgeryDate, setSurgeryDate] = useState(surgery?.date || '03/11/2026');

@@ -1,7 +1,7 @@
-import React from 'react';
+import React,{useEffect,useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
-
+import api from "../services/api";
 import {Block, Button, Text} from '../components';
 import {useTheme} from '../hooks';
 
@@ -10,38 +10,23 @@ const OperationTheatreManagement = ({navigation}: any) => {
   const buttonBlue = '#3b82f6';
   const buttonGray = '#5a6b7d';
 
-  const otRecords = [
-    {
-      id: 1,
-      patientId: 'P-001',
-      patientName: 'John D.',
-      surgeryType: 'Appendectomy',
-      otRoom: 'OT-1',
-      startTime: '10:30',
-      endTime: '12:05',
-      approvalStatus: 'Approved',
-    },
-    {
-      id: 2,
-      patientId: 'P-002',
-      patientName: 'Mary K.',
-      surgeryType: 'C-Section',
-      otRoom: 'OT-2',
-      startTime: '11:00',
-      endTime: '13:20',
-      approvalStatus: 'Pending',
-    },
-    {
-      id: 3,
-      patientId: 'P-003',
-      patientName: 'Ravi M.',
-      surgeryType: 'Hernia Repair',
-      otRoom: 'OT-3',
-      startTime: '12:15',
-      endTime: '13:10',
-      approvalStatus: 'Approved',
-    },
-  ];
+ const [otRecords, setOtRecords] = useState<any[]>([]);
+ const fetchOT = async () => {
+  try {
+
+    const response = await api.get("ot");
+
+    if(response.data.success){
+      setOtRecords(response.data.data);
+    }
+
+  } catch(error){
+    console.log("OT fetch error:", error);
+  }
+};
+useEffect(() => {
+  fetchOT();
+}, []);
 
   return (
     <Block>
@@ -113,30 +98,37 @@ const OperationTheatreManagement = ({navigation}: any) => {
                       paddingHorizontal={sizes.xs}
                       width={1050}
                       style={{borderBottomWidth: 1, borderBottomColor: colors.light}}>
-                      <Text size={12} style={{width: 116}}>
-                        {record.id}
-                      </Text>
-                      <Text size={12} style={{width: 116}}>
-                        {record.patientId}
-                      </Text>
-                      <Text size={12} style={{width: 116}}>
-                        {record.patientName}
-                      </Text>
-                      <Text size={12} style={{width: 116}}>
-                        {record.surgeryType}
-                      </Text>
-                      <Text size={12} style={{width: 116}}>
-                        {record.otRoom}
-                      </Text>
-                      <Text size={12} style={{width: 116}}>
-                        {record.startTime}
-                      </Text>
-                      <Text size={12} style={{width: 116}}>
-                        {record.endTime}
-                      </Text>
-                      <Text size={12} style={{width: 116}}>
-                        {record.approvalStatus}
-                      </Text>
+                     <Text size={12} style={{width: 116}}>
+  {record.id}
+</Text>
+
+<Text size={12} style={{width: 116}}>
+  {record.surgery?.patient?.patient_code}
+</Text>
+
+<Text size={12} style={{width: 116}}>
+  {record.surgery?.patient?.first_name}
+</Text>
+
+<Text size={12} style={{width: 116}}>
+  {record.surgery?.surgery_type}
+</Text>
+
+<Text size={12} style={{width: 116}}>
+  {record.ot_room_used}
+</Text>
+
+<Text size={12} style={{width: 116}}>
+  {record.start_time}
+</Text>
+
+<Text size={12} style={{width: 116}}>
+  {record.end_time}
+</Text>
+
+<Text size={12} style={{width: 116}}>
+  {record.approval_status}
+</Text>
                       <Block row style={{width: 116}} align="center">
                         <TouchableOpacity style={{marginRight: 12}}>
                           <MaterialIcons name="edit" size={18} color={buttonBlue} />

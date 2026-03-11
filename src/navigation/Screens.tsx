@@ -15,6 +15,7 @@ import {
   OperationTheatreManagement,
   OTUsageForm,
   PostOperativeComplications,
+  Postopedit,
 } from '../screens';
 import {useScreenOptions, useTranslation} from '../hooks';
 
@@ -86,6 +87,12 @@ export default () => {
         name="PostOperativeComplications"
         component={PostOperativeComplications}
         options={{title: 'Post-Operative'}}
+      />
+
+      <Stack.Screen
+        name="Postopedit"
+        component={Postopedit}
+        options={{title: 'Edit Post-Operative'}}
       />
 
       <Stack.Screen name="Pro" component={Pro} options={screenOptions.pro} />
