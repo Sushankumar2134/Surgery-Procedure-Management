@@ -1,37 +1,36 @@
 import React, {useState} from 'react';
-import {TouchableOpacity} from 'react-native';
+import {Modal as RNModal, Platform, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
+import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 
-import {Block, Button, Image, Input, Switch, Text} from '../components';
+import {Block, Button, Input, Text} from '../components';
 import {useTheme} from '../hooks';
 
-const SurgeryScheduling = () => {
-  const {assets, colors, sizes} = useTheme();
-  const [consentObtained, setConsentObtained] = useState(false);
-  const buttonPink = '#fe00e0';
+type PickerType =
+  | 'patient'
+  | 'surgeon'
+  | 'assistantDoctor'
+  | 'anesthetist'
+  | 'priority'
+  | 'consent'
+  | 'fastingStatus'
+  | null;
 
-  const metrics = [
-    {
-      label: 'Total Surgeries Today',
-      value: '24',
-      icon: assets.calendar,
-    },
-    {
-      label: 'Emergency Surgeries',
-      value: '6',
-      icon: assets.warning,
-    },
-    {
-      label: 'Pending Surgeries',
-      value: '11',
-      icon: assets.clock,
-    },
-    {
-      label: 'Completed Surgeries',
-      value: '13',
-      icon: assets.check,
-    },
-  ];
+const SurgeryScheduling = () => {
+  const {colors, sizes} = useTheme();
+  const [activePicker, setActivePicker] = useState<PickerType>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState('John D.');
+  const [selectedSurgeon, setSelectedSurgeon] = useState('Dr. Susan');
+  const [selectedAssistantDoctor, setSelectedAssistantDoctor] = useState('Dr. Kevin');
+  const [selectedAnesthetist, setSelectedAnesthetist] = useState('Dr. Meera');
+  const [selectedPriority, setSelectedPriority] = useState('Normal');
+  const [selectedConsent, setSelectedConsent] = useState('Yes');
+  const [selectedFastingStatus, setSelectedFastingStatus] = useState('Fasting');
+  const [selectedDate, setSelectedDate] = useState('2026-03-10');
+  const [selectedTime, setSelectedTime] = useState('09:00');
+  const buttonPink = '#fe00e0';
 
   const surgeries = [
     {
@@ -69,6 +68,149 @@ const SurgeryScheduling = () => {
     },
   ];
 
+  const patientOptions = Array.from(
+    new Set([...surgeries.map((surgery) => surgery.patient), 'Aisha P.', 'Karan S.']),
+  );
+  const surgeonOptions = Array.from(new Set(surgeries.map((surgery) => surgery.surgeon)));
+  const assistantDoctorOptions = ['Dr. Kevin', 'Dr. Priya', 'Dr. Ahmed'];
+  const anesthetistOptions = ['Dr. Meera', 'Dr. Rahul', 'Dr. Shreya'];
+  const priorityOptions = ['Normal', 'Emergency'];
+  const consentOptions = ['Yes', 'No'];
+  const fastingStatusOptions = ['Fasting', 'Not Fasting', 'NPO After Midnight'];
+
+  const pickerOptions =
+    activePicker === 'patient'
+      ? patientOptions
+      : activePicker === 'surgeon'
+      ? surgeonOptions
+      : activePicker === 'assistantDoctor'
+      ? assistantDoctorOptions
+      : activePicker === 'anesthetist'
+      ? anesthetistOptions
+      : activePicker === 'priority'
+      ? priorityOptions
+      : activePicker === 'consent'
+      ? consentOptions
+      : activePicker === 'fastingStatus'
+      ? fastingStatusOptions
+      : [];
+
+  const selectedPickerValue =
+    activePicker === 'patient'
+      ? selectedPatient
+      : activePicker === 'surgeon'
+      ? selectedSurgeon
+      : activePicker === 'assistantDoctor'
+      ? selectedAssistantDoctor
+      : activePicker === 'anesthetist'
+      ? selectedAnesthetist
+      : activePicker === 'priority'
+      ? selectedPriority
+      : activePicker === 'consent'
+      ? selectedConsent
+      : activePicker === 'fastingStatus'
+      ? selectedFastingStatus
+      : '';
+
+  const pickerTitle =
+    activePicker === 'patient'
+      ? 'Select Patient'
+      : activePicker === 'surgeon'
+      ? 'Select Surgeon'
+      : activePicker === 'assistantDoctor'
+      ? 'Select Assistant Doctor'
+      : activePicker === 'anesthetist'
+      ? 'Select Anesthetist'
+      : activePicker === 'priority'
+      ? 'Select Priority'
+      : activePicker === 'consent'
+      ? 'Select Consent Obtained'
+      : activePicker === 'fastingStatus'
+      ? 'Select Fasting Status'
+      : '';
+
+  const isCompactPicker = activePicker === 'patient' || activePicker === 'priority';
+
+  const handleSelectPickerValue = (value: string) => {
+    if (activePicker === 'patient') setSelectedPatient(value);
+    if (activePicker === 'surgeon') setSelectedSurgeon(value);
+    if (activePicker === 'assistantDoctor') setSelectedAssistantDoctor(value);
+    if (activePicker === 'anesthetist') setSelectedAnesthetist(value);
+    if (activePicker === 'priority') setSelectedPriority(value);
+    if (activePicker === 'consent') setSelectedConsent(value);
+    if (activePicker === 'fastingStatus') setSelectedFastingStatus(value);
+    setActivePicker(null);
+  };
+
+  const dateValue = new Date(`${selectedDate}T08:00:00`);
+  const [selectedHour, selectedMinute] = selectedTime.split(':');
+  const timeValue = new Date();
+  timeValue.setHours(Number(selectedHour || '9'));
+  timeValue.setMinutes(Number(selectedMinute || '0'));
+  timeValue.setSeconds(0);
+
+  const onChangeDate = (_event: DateTimePickerEvent, value?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (!value) {
+      return;
+    }
+
+    const yyyy = value.getFullYear();
+    const mm = String(value.getMonth() + 1).padStart(2, '0');
+    const dd = String(value.getDate()).padStart(2, '0');
+    setSelectedDate(`${yyyy}-${mm}-${dd}`);
+  };
+
+  const onChangeTime = (_event: DateTimePickerEvent, value?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    if (!value) {
+      return;
+    }
+
+    const hh = String(value.getHours()).padStart(2, '0');
+    const mm = String(value.getMinutes()).padStart(2, '0');
+    setSelectedTime(`${hh}:${mm}`);
+  };
+
+  const renderPickerField = ({
+    label,
+    value,
+    onPress,
+    iconName,
+  }: {
+    label: string;
+    value: string;
+    onPress: () => void;
+    iconName: 'arrow-drop-down' | 'calendar-today' | 'access-time';
+  }) => (
+    <Block marginBottom={sizes.sm}>
+      <Text size={12} gray marginBottom={sizes.xs}>
+        {label}
+      </Text>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        <Block
+          row
+          align="center"
+          justify="space-between"
+          radius={sizes.inputRadius}
+          paddingHorizontal={sizes.inputPadding}
+          style={{
+            minHeight: sizes.inputHeight,
+            borderWidth: sizes.inputBorder,
+            borderColor: colors.gray,
+            backgroundColor: colors.white,
+          }}>
+          <Text>{value}</Text>
+          <MaterialIcons name={iconName} size={20} color={colors.gray} />
+        </Block>
+      </TouchableOpacity>
+    </Block>
+  );
+
   return (
     <Block>
       <Block scroll contentContainerStyle={{paddingBottom: sizes.l}}>
@@ -77,62 +219,86 @@ const SurgeryScheduling = () => {
             Surgery / Procedure Management 
           </Text>
 
-
-  
-          {/* Metrics Cards */}
-          <Block row wrap="wrap" justify="space-between">
-            {metrics.map((metric) => (
-              <Block
-                card
-                key={metric.label}
-                width="48%"
-                marginBottom={sizes.sm}
-                padding={sizes.sm}>
-                <Block row align="center" justify="space-between">
-                  <Block
-                    flex={0}
-                    radius={sizes.s}
-                    width={sizes.md}
-                    height={sizes.md}
-                    align="center"
-                    justify="center"
-                    color={colors.light}>
-                    <Image source={metric.icon} color={colors.primary} radius={0} />
-                  </Block>
-                  <Text h5 semibold>
-                    {metric.value}
-                  </Text>
-                </Block>
-                <Text p gray marginTop={sizes.xs}>
-                  {metric.label}
-                </Text>
-              </Block>
-            ))}
-          </Block>
-
           {/* Surgery Scheduling Form */}
           <Block card marginTop={sizes.xs} padding={sizes.sm}>
             <Text p semibold marginBottom={sizes.sm}>
               Surgery Scheduling
             </Text>
 
-            <Input placeholder="Patient (Dropdown)" marginBottom={sizes.sm} />
+            {renderPickerField({
+              label: 'Patient',
+              value: selectedPatient,
+              onPress: () => setActivePicker('patient'),
+              iconName: 'arrow-drop-down',
+            })}
 
             <Input placeholder="Surgery Type" marginBottom={sizes.sm} />
 
-            <Input placeholder="Surgery Date" marginBottom={sizes.sm} />
+            {renderPickerField({
+              label: 'Surgery Date',
+              value: selectedDate,
+              onPress: () => setShowDatePicker((prev) => !prev),
+              iconName: 'calendar-today',
+            })}
 
-            <Input placeholder="Surgery Time" marginBottom={sizes.sm} />
+            {showDatePicker && (
+              <Block marginBottom={sizes.sm}>
+                <DateTimePicker
+                  value={dateValue}
+                  mode="date"
+                  display="default"
+                  onChange={onChangeDate}
+                />
+              </Block>
+            )}
+
+            {renderPickerField({
+              label: 'Surgery Time',
+              value: selectedTime,
+              onPress: () => setShowTimePicker((prev) => !prev),
+              iconName: 'access-time',
+            })}
+
+            {showTimePicker && (
+              <Block marginBottom={sizes.sm}>
+                <DateTimePicker
+                  value={timeValue}
+                  mode="time"
+                  display="default"
+                  onChange={onChangeTime}
+                />
+              </Block>
+            )}
 
             <Input placeholder="OT Room" marginBottom={sizes.sm} />
 
-            <Input placeholder="Surgeon" marginBottom={sizes.sm} />
+            {renderPickerField({
+              label: 'Surgeon',
+              value: selectedSurgeon,
+              onPress: () => setActivePicker('surgeon'),
+              iconName: 'arrow-drop-down',
+            })}
 
-            <Input placeholder="Assistant Doctor" marginBottom={sizes.sm} />
+            {renderPickerField({
+              label: 'Assistant Doctor',
+              value: selectedAssistantDoctor,
+              onPress: () => setActivePicker('assistantDoctor'),
+              iconName: 'arrow-drop-down',
+            })}
 
-            <Input placeholder="Anesthetist" marginBottom={sizes.sm} />
+            {renderPickerField({
+              label: 'Anesthetist',
+              value: selectedAnesthetist,
+              onPress: () => setActivePicker('anesthetist'),
+              iconName: 'arrow-drop-down',
+            })}
 
-            <Input placeholder="Priority (Normal / Emergency)" marginBottom={sizes.sm} />
+            {renderPickerField({
+              label: 'Priority',
+              value: selectedPriority,
+              onPress: () => setActivePicker('priority'),
+              iconName: 'arrow-drop-down',
+            })}
               <Input
                     placeholder="Notes"
                     marginBottom={sizes.sm}
@@ -171,15 +337,19 @@ const SurgeryScheduling = () => {
                 <Input placeholder="Heart Rate" marginBottom={sizes.sm} />
             <Input placeholder="Allergies" marginBottom={sizes.sm} />
 
-            <Block row align="center" justify="space-between" marginBottom={sizes.sm}>
-              <Text>Consent Obtained</Text>
-              <Switch
-                checked={consentObtained}
-                onPress={(checked) => setConsentObtained(checked)}
-              />
-            </Block>
+            {renderPickerField({
+              label: 'Consent Obtained',
+              value: selectedConsent,
+              onPress: () => setActivePicker('consent'),
+              iconName: 'arrow-drop-down',
+            })}
 
-            <Input placeholder="Fasting Status" marginBottom={sizes.sm} />
+            {renderPickerField({
+              label: 'Fasting Status',
+              value: selectedFastingStatus,
+              onPress: () => setActivePicker('fastingStatus'),
+              iconName: 'arrow-drop-down',
+            })}
 
             <Input placeholder="Risk Factors" marginBottom={sizes.sm} />
             <Input placeholder="Pre-Operative Instructions" marginBottom={sizes.sm} />
@@ -196,92 +366,64 @@ const SurgeryScheduling = () => {
             </Block>
           </Block>
 
-          {/* Surgery List Table */}
-          <Block card marginTop={sizes.sm} padding={sizes.sm}>
-            <Text p semibold marginBottom={sizes.sm}>
-              Surgery List
-            </Text>
-
-            <Block scroll horizontal showsHorizontalScrollIndicator={false}>
-              <Block>
-                <Block
-                  row
-                  color={colors.light}
-                  radius={sizes.s}
-                  paddingVertical={sizes.s}
-                  paddingHorizontal={sizes.xs}
-                  width={980}>
-                  {[
-                    'Surgery ID',
-                    'Patient',
-                    'Surgery Type',
-                    'Date',
-                    'Time',
-                    'OT Room',
-                    'Surgeon',
-                    'Priority',
-                    'Status',
-                    'Actions',
-                  ].map((header) => (
-                    <Text key={header} semibold size={12} style={{width: 96}}>
-                      {header}
-                    </Text>
-                  ))}
-                </Block>
-
-                {surgeries.map((surgery) => (
-                  <Block
-                    key={surgery.id}
-                    row
-                    paddingVertical={sizes.s}
-                    paddingHorizontal={sizes.xs}
-                    width={980}
-                    style={{borderBottomWidth: 1, borderBottomColor: colors.light}}>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.id}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.patient}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.type}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.date}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.time}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.room}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.surgeon}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.priority}
-                    </Text>
-                    <Text size={12} style={{width: 96}}>
-                      {surgery.status}
-                    </Text>
-
-                    <Block row style={{width: 96}} align="center">
-                      <TouchableOpacity style={{marginRight: 12}}>
-                        <MaterialIcons name="edit" size={18} color={buttonPink} />
-                      </TouchableOpacity>
-
-                      <TouchableOpacity>
-                        <MaterialIcons name="visibility" size={18} color={buttonPink} />
-                      </TouchableOpacity>
-                    </Block>
-                  </Block>
-                ))}
-              </Block>
-            </Block>
-          </Block>
-
         </Block>
       </Block>
+
+      <RNModal
+        visible={Boolean(activePicker)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActivePicker(null)}>
+        <Block
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            padding: sizes.sm,
+            backgroundColor: 'rgba(0,0,0,0.35)',
+          }}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setActivePicker(null)}
+            style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}
+          />
+
+          <Block
+            card
+            padding={sizes.sm}
+            style={{
+              maxHeight: sizes.height * 0.7,
+              alignSelf: 'center',
+              width: isCompactPicker ? '72%' : '92%',
+            }}>
+            <Text p semibold marginBottom={sizes.sm}>
+              {pickerTitle}
+            </Text>
+            <Block scroll showsVerticalScrollIndicator={false}>
+              {pickerOptions.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => handleSelectPickerValue(option)}
+                  activeOpacity={0.8}>
+                  <Block
+                    row
+                    align="center"
+                    justify="space-between"
+                    paddingVertical={sizes.s}
+                    style={{
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.light,
+                    }}>
+                    <Text>{option}</Text>
+                    {selectedPickerValue === option && (
+                      <MaterialIcons name="check" size={18} color={buttonPink} />
+                    )}
+                  </Block>
+                </TouchableOpacity>
+              ))}
+            </Block>
+          </Block>
+        </Block>
+      </RNModal>
     </Block>
   );
 };

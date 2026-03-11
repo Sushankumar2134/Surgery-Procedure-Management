@@ -1,131 +1,59 @@
-import React from 'react';
+import React,{useEffect,useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
 
-import {Block, Button, Image, Input, Text} from '../components';
+import {Block, Button, Text} from '../components';
 import {useTheme} from '../hooks';
+import api from "../services/api";
 
-const PostOperativeComplications = () => {
-  const {assets, colors, sizes} = useTheme();
+const PostOperativeComplications = ({navigation}: any) => {
+  const {colors, sizes} = useTheme();
   const buttonPink = '#fe00e0';
 
-  const metrics = [
-    {label: 'Surgeries Completed Today', value: '13', icon: assets.check},
-    {label: 'Complications Reported', value: '2', icon: assets.warning},
-    {label: 'Recovery Patients', value: '9', icon: assets.users},
-    {label: 'Critical Patients', value: '3', icon: assets.notification},
-  ];
+  const [postOperativeRecords, setPostOperativeRecords] = useState<any[]>([]);
 
-  const outcomes = [
-    {
-      id: 'SUR-1001',
-      patient: 'John D.',
-      procedure: 'Appendectomy',
-      duration: '1h 10m',
-      condition: 'Stable',
-      complications: 'None',
-    },
-    {
-      id: 'SUR-1002',
-      patient: 'Mary K.',
-      procedure: 'C-Section',
-      duration: '1h 35m',
-      condition: 'Recovering',
-      complications: 'Minor Bleeding',
-    },
-    {
-      id: 'SUR-1003',
-      patient: 'Ravi M.',
-      procedure: 'Hernia Repair',
-      duration: '55m',
-      condition: 'Stable',
-      complications: 'None',
-    },
-  ];
+const fetchPostOperative = async () => {
+  try {
+    const response = await api.get("post-operative");
+
+    console.log("API Response:", response.data);
+
+    if (response.data.success) {
+      setPostOperativeRecords(response.data.data);
+    }
+
+  } catch (error) {
+    console.log("Post operative API error:", error);
+  }
+};
+
+useEffect(() => {
+
+  const unsubscribe = navigation.addListener("focus", () => {
+    fetchPostOperative();
+  });
+
+  return unsubscribe;
+
+}, [navigation]);
+
 
   return (
     <Block>
       <Block scroll contentContainerStyle={{paddingBottom: sizes.l}}>
         <Block color={colors.card} padding={sizes.padding}>
-          <Text h5 semibold marginBottom={sizes.sm}>
-            Post-Operative Notes & Complications
+          <Block row align="center" justify="space-between" marginBottom={sizes.sm}>
+            <Text h5 semibold>
+              Post Operative Notes
+            </Text>
+           
+          </Block>
+
+          <Text p semibold marginBottom={sizes.sm}>
+            Post Operative Records
           </Text>
 
-          <Block row wrap="wrap" justify="space-between">
-            {metrics.map((metric) => (
-              <Block
-                card
-                key={metric.label}
-                width="48%"
-                marginBottom={sizes.sm}
-                padding={sizes.sm}>
-                <Block row align="center" justify="space-between">
-                  <Block
-                    flex={0}
-                    radius={sizes.s}
-                    width={sizes.md}
-                    height={sizes.md}
-                    align="center"
-                    justify="center"
-                    color={colors.light}>
-                    <Image source={metric.icon} color={colors.primary} radius={0} />
-                  </Block>
-                  <Text h5 semibold>
-                    {metric.value}
-                  </Text>
-                </Block>
-                <Text p gray marginTop={sizes.xs}>
-                  {metric.label}
-                </Text>
-              </Block>
-            ))}
-          </Block>
-
           <Block card marginTop={sizes.xs} padding={sizes.sm}>
-            <Text p semibold marginBottom={sizes.sm}>
-              Post Operative Form
-            </Text>
-            <Input placeholder="Procedure Performed" marginBottom={sizes.sm} />
-            <Input placeholder="Duration" marginBottom={sizes.sm} />
-            <Input placeholder="Blood Loss" marginBottom={sizes.sm} />
-          <Input placeholder="Patient Condition (Stable / Critical)" marginBottom={sizes.sm} />
-            <Input
-              placeholder="Recovery Instructions"
-              marginBottom={sizes.sm}
-              multiline
-              numberOfLines={3}
-            />
-
-            <Block row justify="flex-end">
-              <Button color={buttonPink} paddingHorizontal={sizes.m}>
-                <Text white semibold>
-                  Save Post-Op Notes
-                </Text>
-              </Button>
-            </Block>
-          </Block>
-
-          <Block card marginTop={sizes.sm} padding={sizes.sm}>
-            <Text p semibold marginBottom={sizes.sm}>
-              Complication Form
-            </Text>
-            <Input placeholder="Complication Type" marginBottom={sizes.sm} />
-            <Input placeholder="Description" marginBottom={sizes.sm} multiline numberOfLines={3} />
-
-            <Block row justify="flex-end">
-              <Button color={buttonPink} paddingHorizontal={sizes.m}>
-                <Text white semibold>
-                  Record Complication
-                </Text>
-              </Button>
-            </Block>
-          </Block>
-
-          <Block card marginTop={sizes.sm} padding={sizes.sm}>
-            <Text p semibold marginBottom={sizes.sm}>
-              Surgery Outcome Table
-            </Text>
-
             <Block scroll horizontal showsHorizontalScrollIndicator={false}>
               <Block>
                 <Block
@@ -134,14 +62,16 @@ const PostOperativeComplications = () => {
                   radius={sizes.s}
                   paddingVertical={sizes.s}
                   paddingHorizontal={sizes.xs}
-                  width={820}>
+                  width={1050}>
                   {[
-                    'Surgery ID',
+                    '#',
                     'Patient',
-                    'Procedure',
+                    'Patient Name',
+                    'Surgery Type',
+                    'Procedure Performed',
                     'Duration',
-                    'Condition',
-                    'Complications',
+                    'Patient Condition',
+                    'Complication',
                     'Actions',
                   ].map((header) => (
                     <Text key={header} semibold size={12} style={{width: 116}}>
@@ -150,42 +80,74 @@ const PostOperativeComplications = () => {
                   ))}
                 </Block>
 
-                {outcomes.map((row) => (
-                  <Block
-                    key={row.id}
-                    row
-                    paddingVertical={sizes.s}
-                    paddingHorizontal={sizes.xs}
-                    width={820}
-                    style={{borderBottomWidth: 1, borderBottomColor: colors.light}}>
-                    <Text size={12} style={{width: 116}}>
-                      {row.id}
-                    </Text>
-                    <Text size={12} style={{width: 116}}>
-                      {row.patient}
-                    </Text>
-                    <Text size={12} style={{width: 116}}>
-                      {row.procedure}
-                    </Text>
-                    <Text size={12} style={{width: 116}}>
-                      {row.duration}
-                    </Text>
-                    <Text size={12} style={{width: 116}}>
-                      {row.condition}
-                    </Text>
-                    <Text size={12} style={{width: 116}}>
-                      {row.complications}
-                    </Text>
-                    <Block row style={{width: 116}} align="center">
-                      <TouchableOpacity style={{marginRight: 12}}>
-                        <MaterialIcons name="edit" size={18} color={buttonPink} />
-                      </TouchableOpacity>
-                      <TouchableOpacity>
-                        <MaterialIcons name="visibility" size={18} color={buttonPink} />
-                      </TouchableOpacity>
+                {postOperativeRecords.length > 0 ? (
+                  postOperativeRecords.map((record,index) => (
+                    <Block
+                      key={record.id}
+                      row
+                      paddingVertical={sizes.s}
+                      paddingHorizontal={sizes.xs}
+                      width={1050}
+                      style={{borderBottomWidth: 1, borderBottomColor: colors.light}}>
+               <Text size={12} style={{width:116}}>
+  {index + 1}
+</Text>
+
+<Text size={12} style={{width:116}}>
+  {record.surgery?.patient?.patient_code || "-"}
+</Text>
+
+<Text size={12} style={{width:116}}>
+  {record.surgery?.patient?.first_name}
+</Text>
+
+<Text size={12} style={{width:116}}>
+  {record.surgery?.surgery_type}
+</Text>
+
+<Text size={12} style={{width:116}}>
+  {record.procedure_performed}
+</Text>
+
+<Text size={12} style={{width:116}}>
+  {record.duration}
+</Text>
+
+<Text size={12} style={{width:116}}>
+  {record.patient_condition}
+</Text>
+
+<Text size={12} style={{width:116}}>
+  {record.complication_type}
+</Text>
+
+<Block row style={{width:116}} align="center">
+  <TouchableOpacity style={{marginRight:12}}>
+    <MaterialIcons name="edit" size={18} color={buttonPink} />
+  </TouchableOpacity>
+
+  <TouchableOpacity style={{marginRight:12}}>
+    <MaterialIcons name="visibility" size={18} color={buttonPink} />
+  </TouchableOpacity>
+
+  <TouchableOpacity>
+    <MaterialIcons name="delete" size={18} color="#ea0606" />
+  </TouchableOpacity>
+</Block>
                     </Block>
+                  ))
+                ) : (
+                  <Block
+                    row
+                    paddingVertical={sizes.m}
+                    align="center"
+                    justify="center"
+                    width={1050}>
+                    <Text gray center>
+                      No Post Operative Records Found
+                    </Text>
                   </Block>
-                ))}
+                )}
               </Block>
             </Block>
           </Block>

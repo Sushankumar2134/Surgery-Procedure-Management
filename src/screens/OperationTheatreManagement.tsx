@@ -2,47 +2,44 @@ import React from 'react';
 import {TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '@expo/vector-icons';
 
-import {Block, Button, Image, Input, Text} from '../components';
+import {Block, Button, Text} from '../components';
 import {useTheme} from '../hooks';
 
-const OperationTheatreManagement = () => {
-  const {assets, colors, sizes} = useTheme();
-  const buttonPink = '#fe00e0';
-
-  const metrics = [
-    {label: 'OT In Use', value: '5', icon: assets.office},
-    {label: 'Available OT Rooms', value: '3', icon: assets.home},
-    {label: 'Surgeries In Progress', value: '4', icon: assets.clock},
-    {label: 'OT Utilization %', value: '78%', icon: assets.documentation},
-  ];
+const OperationTheatreManagement = ({navigation}: any) => {
+  const {colors, sizes} = useTheme();
+  const buttonBlue = '#3b82f6';
+  const buttonGray = '#5a6b7d';
 
   const otRecords = [
     {
-      id: 'SUR-1002',
-      room: 'OT-1',
-      start: '10:30',
-      end: '12:05',
-      duration: '1h 35m',
-      equipment: 'Anesthesia Cart',
-      status: 'Approved',
+      id: 1,
+      patientId: 'P-001',
+      patientName: 'John D.',
+      surgeryType: 'Appendectomy',
+      otRoom: 'OT-1',
+      startTime: '10:30',
+      endTime: '12:05',
+      approvalStatus: 'Approved',
     },
     {
-      id: 'SUR-1004',
-      room: 'OT-2',
-      start: '11:00',
-      end: '13:20',
-      duration: '2h 20m',
-      equipment: 'Laparoscopy Set',
-      status: 'Pending',
+      id: 2,
+      patientId: 'P-002',
+      patientName: 'Mary K.',
+      surgeryType: 'C-Section',
+      otRoom: 'OT-2',
+      startTime: '11:00',
+      endTime: '13:20',
+      approvalStatus: 'Pending',
     },
     {
-      id: 'SUR-1005',
-      room: 'OT-3',
-      start: '12:15',
-      end: '13:10',
-      duration: '55m',
-      equipment: 'Suction Unit',
-      status: 'Approved',
+      id: 3,
+      patientId: 'P-003',
+      patientName: 'Ravi M.',
+      surgeryType: 'Hernia Repair',
+      otRoom: 'OT-3',
+      startTime: '12:15',
+      endTime: '13:10',
+      approvalStatus: 'Approved',
     },
   ];
 
@@ -50,66 +47,37 @@ const OperationTheatreManagement = () => {
     <Block>
       <Block scroll contentContainerStyle={{paddingBottom: sizes.l}}>
         <Block color={colors.card} padding={sizes.padding}>
-          <Text h5 semibold marginBottom={sizes.sm}>
-            Operation Theatre Management
-          </Text>
-
-          <Block row wrap="wrap" justify="space-between">
-            {metrics.map((metric) => (
-              <Block
-                card
-                key={metric.label}
-                width="48%"
-                marginBottom={sizes.sm}
-                padding={sizes.sm}>
-                <Block row align="center" justify="space-between">
-                  <Block
-                    flex={0}
-                    radius={sizes.s}
-                    width={sizes.md}
-                    height={sizes.md}
-                    align="center"
-                    justify="center"
-                    color={colors.light}>
-                    <Image source={metric.icon} color={colors.primary} radius={0} />
-                  </Block>
-                  <Text h5 semibold>
-                    {metric.value}
-                  </Text>
-                </Block>
-                <Text p gray marginTop={sizes.xs}>
-                  {metric.label}
-                </Text>
-              </Block>
-            ))}
-          </Block>
-
-          <Block card marginTop={sizes.xs} padding={sizes.sm}>
-            <Text p semibold marginBottom={sizes.sm}>
-              OT Usage Form
+          <Block row align="center" justify="space-between" marginBottom={sizes.m}>
+            <Text h5 semibold>
+              OT Management
             </Text>
-            <Input placeholder="OT Room" marginBottom={sizes.sm} />
-             <Input placeholder="Start Time" marginBottom={sizes.sm} />
-
-            <Input placeholder="End Time" marginBottom={sizes.sm} />
-            <Input placeholder="Equipment Used" marginBottom={sizes.sm} />
-            <Input placeholder="Approval Status" marginBottom={sizes.sm} />
-            <Input placeholder="Notes" marginBottom={sizes.sm} multiline numberOfLines={3} />
-
-            <Block row justify="flex-end">
-              <Button color={buttonPink} paddingHorizontal={sizes.m}>
-                <Text white semibold>
-                  Update OT Details
+            <Block row>
+              <Button
+                color={buttonBlue}
+                style={{backgroundColor: buttonBlue, marginRight: sizes.sm}}
+                paddingHorizontal={sizes.m}
+                onPress={() => navigation.navigate('Screens', {screen: 'OTUsageForm'})}>
+                <Text white semibold size={4}>
+                  CREATE OT RECORD
+                </Text>
+              </Button>
+              <Button
+                color={buttonGray}
+                style={{backgroundColor: buttonGray}}
+                paddingHorizontal={sizes.m}
+                onPress={() => navigation.navigate('Screens', {screen: 'SurgeryList'})}>
+                <Text white semibold size={4}>
+                  BACK TO SURGERIES
                 </Text>
               </Button>
             </Block>
           </Block>
 
-          <Block card marginTop={sizes.sm} padding={sizes.sm}>
-            <Text p semibold marginBottom={sizes.sm}>
-              OT Usage Table
-            </Text>
+          <Text p semibold marginBottom={sizes.sm}>
+            OT Records
+          </Text>
 
+          <Block card marginTop={sizes.xs} padding={sizes.sm}>
             <Block scroll horizontal showsHorizontalScrollIndicator={false}>
               <Block>
                 <Block
@@ -118,62 +86,74 @@ const OperationTheatreManagement = () => {
                   radius={sizes.s}
                   paddingVertical={sizes.s}
                   paddingHorizontal={sizes.xs}
-                  width={900}>
+                  width={1050}>
                   {[
-                    'Surgery ID',
-                    'OT Room',
+                    '#',
+                    'Patient',
+                    'Patient Name',
+                    'Surgery Type',
+                    'OT Room Used',
                     'Start Time',
                     'End Time',
-                    'Duration',
-                    'Equipment Used',
                     'Approval Status',
                     'Actions',
                   ].map((header) => (
-                    <Text key={header} semibold size={12} style={{width: 112}}>
+                    <Text key={header} semibold size={12} style={{width: 116}}>
                       {header}
                     </Text>
                   ))}
                 </Block>
 
-                {otRecords.map((row) => (
-                  <Block
-                    key={row.id}
-                    row
-                    paddingVertical={sizes.s}
-                    paddingHorizontal={sizes.xs}
-                    width={900}
-                    style={{borderBottomWidth: 1, borderBottomColor: colors.light}}>
-                    <Text size={12} style={{width: 112}}>
-                      {row.id}
-                    </Text>
-                    <Text size={12} style={{width: 112}}>
-                      {row.room}
-                    </Text>
-                    <Text size={12} style={{width: 112}}>
-                      {row.start}
-                    </Text>
-                    <Text size={12} style={{width: 112}}>
-                      {row.end}
-                    </Text>
-                    <Text size={12} style={{width: 112}}>
-                      {row.duration}
-                    </Text>
-                    <Text size={12} style={{width: 112}}>
-                      {row.equipment}
-                    </Text>
-                    <Text size={12} style={{width: 112}}>
-                      {row.status}
-                    </Text>
-                    <Block row style={{width: 112}} align="center">
-                      <TouchableOpacity style={{marginRight: 12}}>
-                        <MaterialIcons name="edit" size={18} color={buttonPink} />
-                      </TouchableOpacity>
-                      <TouchableOpacity>
-                        <MaterialIcons name="visibility" size={18} color={buttonPink} />
-                      </TouchableOpacity>
+                {otRecords.length > 0 ? (
+                  otRecords.map((record) => (
+                    <Block
+                      key={record.id}
+                      row
+                      paddingVertical={sizes.s}
+                      paddingHorizontal={sizes.xs}
+                      width={1050}
+                      style={{borderBottomWidth: 1, borderBottomColor: colors.light}}>
+                      <Text size={12} style={{width: 116}}>
+                        {record.id}
+                      </Text>
+                      <Text size={12} style={{width: 116}}>
+                        {record.patientId}
+                      </Text>
+                      <Text size={12} style={{width: 116}}>
+                        {record.patientName}
+                      </Text>
+                      <Text size={12} style={{width: 116}}>
+                        {record.surgeryType}
+                      </Text>
+                      <Text size={12} style={{width: 116}}>
+                        {record.otRoom}
+                      </Text>
+                      <Text size={12} style={{width: 116}}>
+                        {record.startTime}
+                      </Text>
+                      <Text size={12} style={{width: 116}}>
+                        {record.endTime}
+                      </Text>
+                      <Text size={12} style={{width: 116}}>
+                        {record.approvalStatus}
+                      </Text>
+                      <Block row style={{width: 116}} align="center">
+                        <TouchableOpacity style={{marginRight: 12}}>
+                          <MaterialIcons name="edit" size={18} color={buttonBlue} />
+                        </TouchableOpacity>
+                        <TouchableOpacity>
+                          <MaterialIcons name="delete" size={18} color="#ea0606" />
+                        </TouchableOpacity>
+                      </Block>
                     </Block>
+                  ))
+                ) : (
+                  <Block row paddingVertical={sizes.m} align="center" justify="center" width={1050}>
+                    <Text gray center>
+                      No OT Records Found
+                    </Text>
                   </Block>
-                ))}
+                )}
               </Block>
             </Block>
           </Block>

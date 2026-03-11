@@ -87,6 +87,7 @@ const DrawerContent = (
     {name: t('screens.home'), to: 'Home', icon: assets.home},
     {name: t('screens.components'), to: 'Components', icon: assets.components},
     {name: t('screens.articles'), to: 'Articles', icon: assets.document},
+    {name: 'Surgery List', to: 'SurgeryList', icon: assets.document},
     {name: 'Surgery Scheduling', to: 'SurgeryScheduling', icon: assets.calendar},
     {name: 'OT Management', to: 'OperationTheatreManagement', icon: assets.office},
     {

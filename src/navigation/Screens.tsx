@@ -8,8 +8,12 @@ import {
   Profile,
   Register,
   Pro,
+  SurgeryList,
   SurgeryScheduling,
+  Editsurgery,
+  Editoperativenotes,
   OperationTheatreManagement,
+  OTUsageForm,
   PostOperativeComplications,
 } from '../screens';
 import {useScreenOptions, useTranslation} from '../hooks';
@@ -23,7 +27,7 @@ export default () => {
   return (
     <Stack.Navigator
       screenOptions={screenOptions.stack}
-      initialRouteName="SurgeryScheduling">
+      initialRouteName="SurgeryList">
       <Stack.Screen
         name="Home"
         component={Home}
@@ -43,15 +47,39 @@ export default () => {
       />
 
       <Stack.Screen
+        name="SurgeryList"
+        component={SurgeryList}
+        options={{title: 'Surgery List'}}
+      />
+
+      <Stack.Screen
         name="SurgeryScheduling"
         component={SurgeryScheduling}
         options={{title: 'Surgery Scheduling'}}
       />
 
       <Stack.Screen
+        name="Editsurgery"
+        component={Editsurgery}
+        options={{title: 'Edit Surgery'}}
+      />
+
+      <Stack.Screen
+        name="Editoperativenotes"
+        component={Editoperativenotes}
+        options={{title: 'Post-Operative Notes'}}
+      />
+
+      <Stack.Screen
         name="OperationTheatreManagement"
         component={OperationTheatreManagement}
         options={{title: 'OT Management'}}
+      />
+
+      <Stack.Screen
+        name="OTUsageForm"
+        component={OTUsageForm}
+        options={{title: 'OT Usage Form'}}
       />
 
       <Stack.Screen
