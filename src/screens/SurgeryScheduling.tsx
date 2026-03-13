@@ -464,10 +464,19 @@ if (!surgeryId) {
               </Block>
             )}
 
-            <Input
+  <Input
   placeholder="OT Room"
   value={otRoom}
-  onChangeText={setOtRoom}
+  onChangeText={(text) => {
+
+    if (/[^0-9]/.test(text)) {
+      Alert.alert("Invalid Input", "OT Room must contain numbers only");
+      return;
+    }
+
+    setOtRoom(text);
+  }}
+  keyboardType="numeric"
   marginBottom={sizes.sm}
 />
 
@@ -533,17 +542,36 @@ if (!surgeryId) {
           <Block card marginTop={sizes.sm} padding={sizes.sm}>
             <Text p semibold marginBottom={sizes.sm}>
               Pre-Operative Notes
-            </Text><Input
+            </Text>
+  <Input
   placeholder="BP"
   value={bp}
-  onChangeText={setBp}
+  onChangeText={(text) => {
+
+    if (/[^0-9]/.test(text)) {
+      Alert.alert("Invalid Input", "BP must contain numbers only");
+      return;
+    }
+
+    setBp(text);
+  }}
+  keyboardType="numeric"
   marginBottom={sizes.sm}
 />
 
-               <Input
+  <Input
   placeholder="Heart Rate"
   value={heartRate}
-  onChangeText={setHeartRate}
+  onChangeText={(text) => {
+
+    if (/[^0-9]/.test(text)) {
+      Alert.alert("Invalid Input", "Heart Rate must contain numbers only");
+      return;
+    }
+
+    setHeartRate(text);
+  }}
+  keyboardType="numeric"
   marginBottom={sizes.sm}
 />
             <Input
