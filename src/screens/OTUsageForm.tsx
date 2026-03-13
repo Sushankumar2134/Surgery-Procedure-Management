@@ -239,10 +239,19 @@ const surgeryOptions = surgeries.map((s) => ({
               </Block>
             )}
 
-            <Input
+ <Input
   placeholder="OT Room Used"
   value={otRoomUsed}
-  onChangeText={setOtRoomUsed}
+  onChangeText={(text) => {
+
+    if (/[^0-9]/.test(text)) {
+      Alert.alert("Invalid Input", "OT Room must contain numbers only");
+      return;
+    }
+
+    setOtRoomUsed(text);
+  }}
+  keyboardType="numeric"
   marginBottom={sizes.sm}
 />
 
